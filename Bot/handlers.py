@@ -82,6 +82,7 @@ CHAT_BUTTON_TEXT = {
     "en": "Start chat"
 }
 
+
 class RegistrationStates(StatesGroup):
     waiting_for_language = State()
     waiting_for_username = State()
@@ -91,11 +92,13 @@ class RegistrationStates(StatesGroup):
     waiting_for_phone = State()
     waiting_for_password = State()
 
+
 async def send_message(message: Message, state: FSMContext, key: str, reply_markup=None, **kwargs):
     user_data = await state.get_data()
     language = user_data.get("language", "uz")
     text = LANGUAGES[language][key].format(**kwargs)
     return await message.answer(text, reply_markup=reply_markup)
+
 
 def create_gender_keyboard(language: str) -> InlineKeyboardMarkup:
     gender_options = VALID_GENDERS.get(language, VALID_GENDERS["uz"])
@@ -108,6 +111,7 @@ def create_gender_keyboard(language: str) -> InlineKeyboardMarkup:
         ]
     )
 
+
 def create_phone_keyboard(language: str) -> ReplyKeyboardMarkup:
     return ReplyKeyboardMarkup(
         keyboard=[
@@ -116,6 +120,7 @@ def create_phone_keyboard(language: str) -> ReplyKeyboardMarkup:
         resize_keyboard=True,
         one_time_keyboard=True
     )
+
 
 @router_command.message(Command("start"))
 async def bot_start(message: Message, state: FSMContext):
@@ -133,6 +138,7 @@ async def bot_start(message: Message, state: FSMContext):
     )
     await state.set_state(RegistrationStates.waiting_for_language)
 
+
 @router_command.callback_query(F.data.in_(["uz", "ru", "en"]))
 async def process_language(callback_query: CallbackQuery, state: FSMContext):
     language = callback_query.data
@@ -140,6 +146,7 @@ async def process_language(callback_query: CallbackQuery, state: FSMContext):
     await send_message(callback_query.message, state, "enter_username")
     await state.set_state(RegistrationStates.waiting_for_username)
     await callback_query.answer()
+
 
 @router_command.message(RegistrationStates.waiting_for_username)
 async def process_username(message: Message, state: FSMContext):
@@ -151,6 +158,7 @@ async def process_username(message: Message, state: FSMContext):
     await send_message(message, state, "enter_last_name")
     await state.set_state(RegistrationStates.waiting_for_last_name)
 
+
 @router_command.message(RegistrationStates.waiting_for_last_name)
 async def process_last_name(message: Message, state: FSMContext):
     last_name = message.text.strip()
@@ -160,6 +168,7 @@ async def process_last_name(message: Message, state: FSMContext):
     await state.update_data(last_name=last_name)
     await send_message(message, state, "enter_age")
     await state.set_state(RegistrationStates.waiting_for_age)
+
 
 @router_command.message(RegistrationStates.waiting_for_age)
 async def process_age(message: Message, state: FSMContext):
@@ -181,6 +190,7 @@ async def process_age(message: Message, state: FSMContext):
     except ValueError:
         await send_message(message, state, "invalid_input")
 
+
 @router_command.callback_query(F.data.in_(["erkak", "ayol", "мужской", "женский", "male", "female"]))
 async def process_gender(callback_query: CallbackQuery, state: FSMContext):
     gender = callback_query.data
@@ -198,6 +208,7 @@ async def process_gender(callback_query: CallbackQuery, state: FSMContext):
     )
     await state.set_state(RegistrationStates.waiting_for_phone)
     await callback_query.answer()
+
 
 @router_command.message(RegistrationStates.waiting_for_phone)
 async def process_phone(message: Message, state: FSMContext):
@@ -223,6 +234,7 @@ async def process_phone(message: Message, state: FSMContext):
     await state.update_data(phone=phone)
     await send_message(message, state, "enter_password")
     await state.set_state(RegistrationStates.waiting_for_password)
+
 
 @router_command.message(RegistrationStates.waiting_for_password)
 async def process_password(message: Message, state: FSMContext):
@@ -306,6 +318,7 @@ async def process_password(message: Message, state: FSMContext):
         )
         await state.set_state(RegistrationStates.waiting_for_language)
 
+
 @router_command.callback_query(F.data == "chat_symptoms")
 async def chat(callback_query: CallbackQuery, state: FSMContext):
     user_data = await state.get_data()
@@ -319,3 +332,6 @@ async def chat(callback_query: CallbackQuery, state: FSMContext):
     await callback_query.answer()
 
 
+@router_command.message(RegistrationStates.waiting_for_language)
+async def process_language(message: Message, state: FSMContext):
+    ...
